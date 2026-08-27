@@ -76,8 +76,13 @@ def update_prospect_info(prospect_id, technology):
     "Add a technology to a prospect's source-of-truth record."
     record = PROSPECTS.get(prospect_id)
     if record is None:
-        return {"updated": False, "found": False}
-    tech_stack = list(record["tech_stack"])
-    if technology not in tech_stack:
-        tech_stack.append(technology)
+        return {"updated": False, "found": False, "error": "Prospect record not found."}
+    try:
+        tech_stack = list(record["tech_stack"])
+        if technology not in tech_stack:
+            tech_stack.append(technology)
+        record["tech_stack"] = tech_stack
+        _PROFILES.pop(prospect_id, None)
+    except (KeyError, TypeError) as exc:
+        return {"updated": False, "found": True, "error": str(exc)}
     return {"updated": True, "found": True, "tech_stack": tech_stack}
