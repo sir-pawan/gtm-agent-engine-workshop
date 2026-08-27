@@ -52,10 +52,13 @@ def build_prospect_profile(prospect_id: str) -> dict:
     "Assemble a full prospect profile (engagement history, account details, tech stack) and store it. Returns the profile and a found flag."
     existing = data_service.get_profile_from_db(prospect_id)["prospect_profile"]
     if existing is not None:
+        existing = data_service.redact_prospect(existing)
+        data_service.save_profile_to_db(prospect_id, existing)
         return {"prospect_profile": existing, "found": True}
     rec = data_service.get_prospect_record(prospect_id)
     if rec is None:
         return {"prospect_profile": None, "found": False}
+    rec = data_service.redact_prospect(rec)
     built = {
         "prospect_id": prospect_id,
         **rec,
@@ -130,6 +133,7 @@ def get_prospect(prospect_id: str) -> dict:
         return {"prospect": None, "found": False}
     # Carry the contact fields through, dropping the bulky enrichment blobs the
     # caller can pull from build_prospect_profile instead.
+    record = data_service.redact_prospect(record)
     contact = {
         "prospect_id": prospect_id,
         **{k: v for k, v in record.items()
